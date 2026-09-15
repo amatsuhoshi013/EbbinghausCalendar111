@@ -9,6 +9,7 @@ import type { RangeKey } from "../services/statistics";
 
 export function StatisticsPage() {
   const events = useAppStore((s) => s.events);
+  const weekStartsOn = useAppStore((s) => s.settings.weekStartsOn ?? "sunday");
   const [range, setRange] = useState<RangeKey>("all");
 
   return (
@@ -38,7 +39,7 @@ export function StatisticsPage() {
             ))}
           </div>
         </div>
-        <StatsOverview events={events} range={range} />
+        <StatsOverview events={events} range={range} weekStartsOn={weekStartsOn === "monday" ? 1 : 0} />
       </section>
 
       <div className="stats-grid">

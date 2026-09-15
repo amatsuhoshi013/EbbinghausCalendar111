@@ -25,6 +25,7 @@ export function CalendarDay({
   const selectedDate = useAppStore((s) => s.settings.selectedDate);
   const selectDate = useAppStore((s) => s.selectDate);
   const categories = useAppStore((s) => s.categories);
+  const primaryColor = useAppStore((s) => s.settings.primaryColor ?? "#4a6cf7");
   const [dragOver, setDragOver] = useState(false);
   const today = todayISO();
 
@@ -61,7 +62,7 @@ export function CalendarDay({
           <span
             key={event.id}
             className={`day-event st-${getEventStatus(event, today)}`}
-            style={{ borderLeftColor: eventColor(event, categories) }}
+            style={{ borderLeftColor: eventColor(event, categories, primaryColor) }}
             title={`${event.title}（点击编辑）`}
             draggable
             onDragStart={(e) => {

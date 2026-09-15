@@ -4,16 +4,21 @@ import { migrateV1ToV2 } from "./migration";
 
 /**
  * 持久化适配器契约。
- * UI 只依赖此接口，不感知底层存储：当前是 IndexedDB，Phase 11 换成 SQLite。
+ * UI 只依赖此接口，不感知底层存储：当前是 IndexedDB，未来换成 SQLite。
+ * 底图图片体积大，单独走 blob 通道，不进入 state。
  */
 export interface StorageAdapter {
   load(): Promise<V2State | null>;
   save(state: V2State): Promise<void>;
+  saveBackgroundImage(id: string, blob: Blob): Promise<void>;
+  loadBackgroundImage(id: string): Promise<Blob | null>;
+  deleteBackgroundImage(id: string): Promise<void>;
 }
 
 /** 内存实现：测试与降级用。 */
 export class MemoryStorageAdapter implements StorageAdapter {
   private data: V2State | null;
+  private images = new Map<string, Blob>();
 
   constructor(initial: V2State | null = null) {
     this.data = initial;
@@ -27,6 +32,18 @@ export class MemoryStorageAdapter implements StorageAdapter {
     this.data = state;
   }
 
+  async saveBackgroundImage(id: string, blob: Blob): Promise<void> {
+    this.images.set(id, blob);
+  }
+
+  async loadBackgroundImage(id: string): Promise<Blob | null> {
+    return this.images.get(id) ?? null;
+  }
+
+  async deleteBackgroundImage(id: string): Promise<void> {
+    this.images.delete(id);
+  }
+
   /** 测试用：读取最近一次保存的快照。 */
   getSnapshot(): V2State | null {
     return this.data;
@@ -34,8 +51,10 @@ export class MemoryStorageAdapter implements StorageAdapter {
 }
 
 const V2_DB = "ebbinghaus-calendar-v2";
+const V2_DB_VERSION = 2;
 const V2_STORE = "appState";
 const V2_KEY = "state";
+const IMAGE_STORE = "backgroundImages";
 /** v1 原型的数据库（只读，用于自动迁移）；两代库的 store 名相同。 */
 const LEGACY_DB = "ebbinghaus-scheduler";
 const LEGACY_KEY = "state";
@@ -47,6 +66,7 @@ function openDB(name: string, version: number): Promise<IDBDatabase> {
     request.onupgradeneeded = () => {
       const db = request.result;
       if (!db.objectStoreNames.contains(V2_STORE)) db.createObjectStore(V2_STORE);
+      if (!db.objectStoreNames.contains(IMAGE_STORE)) db.createObjectStore(IMAGE_STORE);
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
@@ -66,6 +86,16 @@ function writeKey(db: IDBDatabase, store: string, key: string, value: unknown): 
   return new Promise((resolve, reject) => {
     const tx = db.transaction(store, "readwrite");
     tx.objectStore(store).put(value, key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error);
+  });
+}
+
+function deleteKey(db: IDBDatabase, store: string, key: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(store, "readwrite");
+    tx.objectStore(store).delete(key);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
     tx.onabort = () => reject(tx.error);
@@ -110,9 +140,30 @@ export class IndexedDBStorageAdapter implements StorageAdapter {
     }
   }
 
+  async saveBackgroundImage(id: string, blob: Blob): Promise<void> {
+    const db = await openDB(V2_DB, V2_DB_VERSION);
+    await writeKey(db, IMAGE_STORE, id, blob);
+    db.close();
+  }
+
+  async loadBackgroundImage(id: string): Promise<Blob | null> {
+    if (typeof indexedDB === "undefined") return null;
+    const db = await openDB(V2_DB, V2_DB_VERSION);
+    const value = (await readKey(db, IMAGE_STORE, id)) as Blob | undefined;
+    db.close();
+    return value ?? null;
+  }
+
+  async deleteBackgroundImage(id: string): Promise<void> {
+    if (typeof indexedDB === "undefined") return;
+    const db = await openDB(V2_DB, V2_DB_VERSION);
+    await deleteKey(db, IMAGE_STORE, id);
+    db.close();
+  }
+
   private async readIndexedDB(dbName: string, key: string): Promise<unknown> {
     if (typeof indexedDB === "undefined") return null;
-    const db = await openDB(dbName, 1);
+    const db = await openDB(dbName, V2_DB_VERSION);
     const value = await readKey(db, V2_STORE, key);
     db.close();
     return value ?? null;
@@ -120,7 +171,7 @@ export class IndexedDBStorageAdapter implements StorageAdapter {
 
   private async writeIndexedDB(dbName: string, key: string, value: V2State): Promise<void> {
     if (typeof indexedDB === "undefined") throw new Error("IndexedDB unavailable");
-    const db = await openDB(dbName, 1);
+    const db = await openDB(dbName, V2_DB_VERSION);
     await writeKey(db, V2_STORE, key, value);
     db.close();
   }

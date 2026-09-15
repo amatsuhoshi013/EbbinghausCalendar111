@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { addDays, diffDays, getCalendarDays, monthKey, shortDate, toISODate, todayISO } from "../src/utils/date";
+import {
+  addDays,
+  diffDays,
+  filterCalendarDays,
+  getCalendarDays,
+  monthKey,
+  shortDate,
+  toISODate,
+  todayISO,
+} from "../src/utils/date";
 
 describe("toISODate", () => {
   it("formats with zero padding", () => {
@@ -63,6 +72,30 @@ describe("getCalendarDays", () => {
   it("covers a 31-day month", () => {
     const days = getCalendarDays("2026-09-15");
     expect(days.filter((d) => monthKey(d) === "2026-09")).toHaveLength(30);
+  });
+
+  it("supports Monday as week start", () => {
+    const days = getCalendarDays("2026-09-15", 1);
+    expect(days.length % 7).toBe(0);
+    expect(new Date(`${days[0]}T00:00:00`).getDay()).toBe(1);
+    // 2026-09-01 是周二 → 周一起始时前置 1 天（8/31 周一）
+    expect(days[0]).toBe("2026-08-31");
+  });
+});
+
+describe("filterCalendarDays", () => {
+  const days = getCalendarDays("2026-09-15");
+  const month = "2026-09";
+
+  it("hides weekends", () => {
+    const filtered = filterCalendarDays(days, month, { showWeekends: false, showAdjacentMonth: true });
+    expect(filtered.some((iso) => [0, 6].includes(new Date(`${iso}T00:00:00`).getDay()))).toBe(false);
+  });
+
+  it("hides adjacent-month days", () => {
+    const filtered = filterCalendarDays(days, month, { showWeekends: true, showAdjacentMonth: false });
+    expect(filtered.every((iso) => iso.slice(0, 7) === month)).toBe(true);
+    expect(filtered).toHaveLength(30);
   });
 });
 

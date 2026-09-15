@@ -41,17 +41,32 @@ export function shortDate(iso: string): string {
   return `${d.getMonth() + 1}/${d.getDate()}`;
 }
 
-/** 返回给定日期所在月的完整月历格子（首尾补足整周），首列周日。 */
-export function getCalendarDays(viewDate: string): string[] {
+/** 返回给定日期所在月的完整月历格子（首尾补足整周）。weekStartsOn: 0=周日（默认），1=周一。 */
+export function getCalendarDays(viewDate: string, weekStartsOn: 0 | 1 = 0): string[] {
   const d = new Date(`${viewDate.slice(0, 7)}-01T00:00:00`);
   const year = d.getFullYear();
   const month = d.getMonth();
   const end = new Date(year, month + 1, 0);
-  const startOffset = new Date(year, month, 1).getDay();
+  const rawOffset = new Date(year, month, 1).getDay();
+  const startOffset = (rawOffset - weekStartsOn + 7) % 7;
   const days: string[] = [];
   for (let i = startOffset; i > 0; i--) days.push(toISODate(new Date(year, month, 1 - i)));
   for (let day = 1; day <= end.getDate(); day++) days.push(toISODate(new Date(year, month, day)));
   const trailing = (7 - (days.length % 7)) % 7;
   for (let i = 1; i <= trailing; i++) days.push(toISODate(new Date(year, month + 1, i)));
   return days;
+}
+
+/** 按日历设置过滤可见格子：隐藏周末 / 隐藏跨月日期。 */
+export function filterCalendarDays(
+  days: string[],
+  month: string,
+  options: { showWeekends: boolean; showAdjacentMonth: boolean },
+): string[] {
+  const weekdayOf = (iso: string) => new Date(`${iso}T00:00:00`).getDay();
+  return days.filter((iso) => {
+    if (!options.showWeekends && (weekdayOf(iso) === 0 || weekdayOf(iso) === 6)) return false;
+    if (!options.showAdjacentMonth && iso.slice(0, 7) !== month) return false;
+    return true;
+  });
 }

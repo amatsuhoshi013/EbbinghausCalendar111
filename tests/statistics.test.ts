@@ -35,6 +35,11 @@ describe("rangeBounds", () => {
     expect(rangeBounds("year", TODAY)).toEqual({ from: "2026-01-01", to: "2026-12-31" });
     expect(rangeBounds("all", TODAY)).toEqual({ from: "", to: "" });
   });
+
+  it("supports Monday as week start", () => {
+    // 2026-09-15 是周二 → 周一为 9/14
+    expect(rangeBounds("week", TODAY, 1)).toEqual({ from: "2026-09-14", to: "2026-09-20" });
+  });
 });
 
 describe("getOverallStats", () => {

@@ -13,8 +13,16 @@ const METRICS: Array<{
   { key: "completionRate", label: "完成率", suffix: "%", className: "metric-rate" },
 ];
 
-export function StatsOverview({ events, range }: { events: Event[]; range: RangeKey }) {
-  const stats = getOverallStats(events, range);
+export function StatsOverview({
+  events,
+  range,
+  weekStartsOn = 0,
+}: {
+  events: Event[];
+  range: RangeKey;
+  weekStartsOn?: 0 | 1;
+}) {
+  const stats = getOverallStats(events, range, undefined, weekStartsOn);
   return (
     <div className="metric-cards">
       {METRICS.map(({ key, label, suffix, className }) => (

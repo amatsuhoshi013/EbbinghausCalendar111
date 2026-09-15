@@ -1,6 +1,9 @@
 :root {
   --bg: #f4f7fb;
   --card: #ffffff;
+  --card-bg: rgba(255, 255, 255, 0.94);
+  --card-opacity: 1;
+  --card-blur: 0px;
   --text: #0f172a;
   --muted: #64748b;
   --line: #dbe4f0;
@@ -38,4 +41,47 @@
   --sidebar-bg: rgba(255, 255, 255, 0.72);
   --sidebar-active: #edf2ff;
   --hover-bg: #f1f5ff;
+
+  --bg-image: none;
+  --bg-overlay: 0;
+  --bg-blur: 0px;
+  --bg-brightness: 1;
 }
+
+:root[data-theme="dark"] {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card-bg: rgba(30, 41, 59, 0.92);
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --line: #334155;
+  --danger-bg: #3a1d22;
+  --danger-text: #fca5a5;
+  --shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+
+  --tab-bg: #263449;
+  --tab-text: #93a7c9;
+  --task-bg: #16223a;
+  --dot-bg: #263449;
+  --dot-border: #3b4a63;
+  --dot-active-bg: #2a3a5c;
+  --dot-future: #475569;
+
+  --pill-today-bg: #3a2d1a;
+  --pill-today-text: #fcd34d;
+  --pill-today-border: #6b4d1f;
+  --pill-overdue-bg: #3a1d22;
+  --pill-overdue-text: #fca5a5;
+  --pill-overdue-border: #7f303a;
+  --pill-done-bg: #12332a;
+  --pill-done-text: #6ee7b7;
+  --pill-done-border: #1f5c45;
+  --pill-future-bg: #1c2b4a;
+  --pill-future-text: #93c5fd;
+  --pill-future-border: #2c4a7c;
+
+  --sidebar-bg: rgba(30, 41, 59, 0.72);
+  --sidebar-active: #263449;
+  --hover-bg: #263449;
+}
+

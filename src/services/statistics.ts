@@ -16,14 +16,14 @@ function rate(done: number, total: number): number {
   return total ? Math.round((done / total) * 1000) / 10 : 0;
 }
 
-/** 统计范围边界：本周按周日开始（与月历一致）；all 不过滤。 */
-export function rangeBounds(range: RangeKey, today: string = todayISO()): RangeBounds {
+/** 统计范围边界：本周按设置的一周起始日（默认周日）；all 不过滤。 */
+export function rangeBounds(range: RangeKey, today: string = todayISO(), weekStartsOn: 0 | 1 = 0): RangeBounds {
   switch (range) {
     case "today":
       return { from: today, to: today };
     case "week": {
       const day = new Date(`${today}T00:00:00`).getDay();
-      const from = addDays(today, -day);
+      const from = addDays(today, -((day - weekStartsOn + 7) % 7));
       return { from, to: addDays(from, 6) };
     }
     case "month": {
@@ -56,8 +56,13 @@ export interface OverallStats {
   completionRate: number;
 }
 
-export function getOverallStats(events: Event[], range: RangeKey, today: string = todayISO()): OverallStats {
-  const bounds = rangeBounds(range, today);
+export function getOverallStats(
+  events: Event[],
+  range: RangeKey,
+  today: string = todayISO(),
+  weekStartsOn: 0 | 1 = 0,
+): OverallStats {
+  const bounds = rangeBounds(range, today, weekStartsOn);
   const scoped = events.filter((e) => inRange(e.date, bounds));
   const completed = scoped.filter((e) => e.completed).length;
   const overdue = scoped.filter((e) => getEventStatus(e, today) === "overdue").length;

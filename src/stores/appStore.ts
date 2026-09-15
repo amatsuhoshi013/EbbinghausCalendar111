@@ -3,8 +3,10 @@ import { withDefaultCategories } from "../services/categories";
 import { createReviewPlanEntities, resolveRule } from "../services/reviews";
 import { detachReviewEvent, moveReviewEvent, rescheduleReviewEvents, type MoveReviewMode } from "../services/reviewPlanService";
 import type { StorageAdapter } from "../services/storage";
+import type { Background } from "../types/background";
 import type { Event, Priority } from "../types/event";
 import type { ReviewPlan, ReviewRule } from "../types/review";
+import type { Settings } from "../types/settings";
 import type { V2State } from "../types/state";
 import { toISODate, todayISO } from "../utils/date";
 import { DEFAULT_INTERVALS } from "../utils/ebbinghaus";
@@ -57,8 +59,12 @@ export interface ReviewPlanPatch {
 interface AppState extends V2State {
   ready: boolean;
   /** 当前页面（会话级 UI 状态，不持久化） */
-  page: "calendar" | "statistics";
-  setPage(page: "calendar" | "statistics"): void;
+  page: "calendar" | "statistics" | "settings";
+  setPage(page: "calendar" | "statistics" | "settings"): void;
+  updateSettings(patch: Partial<Settings>): Promise<void>;
+  addBackground(name: string, blob: Blob): Promise<void>;
+  updateBackground(id: string, patch: Partial<Background>): Promise<void>;
+  removeBackground(id: string): Promise<void>;
   addEvent(input: NewEventInput): Promise<void>;
   updateEvent(eventId: string, patch: EventPatch): Promise<void>;
   deleteEvent(eventId: string): Promise<void>;
@@ -87,6 +93,11 @@ let storage: StorageAdapter | null = null;
 /** 在渲染前由入口注入；测试可注入 MemoryStorageAdapter。 */
 export function setStorageAdapter(adapter: StorageAdapter | null): void {
   storage = adapter;
+}
+
+/** 供底图加载等场景读取当前适配器。 */
+export function getStorageAdapter(): StorageAdapter | null {
+  return storage;
 }
 
 function toV2(state: AppState): V2State {
@@ -136,6 +147,10 @@ export function createInitialV2State(): V2State {
       reviewMinutes: 5,
       selectedDate: todayISO(),
       currentView: "month",
+      theme: "system",
+      fontScale: "normal",
+      weekStartsOn: "sunday",
+      primaryColor: "#4a6cf7",
     },
     backgrounds: [],
   };
@@ -156,6 +171,49 @@ export const useAppStore = create<AppState>()((set, get) => ({
   page: "calendar",
 
   setPage: (page) => set({ page }),
+
+  updateSettings: async (patch) => {
+    set({ settings: { ...get().settings, ...patch } });
+    await persist(get());
+  },
+
+  addBackground: async (name, blob) => {
+    const timestamp = new Date().toISOString();
+    const background: Background = {
+      id: uid(),
+      name,
+      overlayOpacity: 0,
+      blur: 0,
+      brightness: 1,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    await storage?.saveBackgroundImage(background.id, blob);
+    set({
+      backgrounds: [...get().backgrounds, background],
+      settings: { ...get().settings, backgroundId: background.id },
+    });
+    await persist(get());
+  },
+
+  updateBackground: async (id, patch) => {
+    set({
+      backgrounds: get().backgrounds.map((b) =>
+        b.id === id ? { ...b, ...patch, updatedAt: new Date().toISOString() } : b,
+      ),
+    });
+    await persist(get());
+  },
+
+  removeBackground: async (id) => {
+    await storage?.deleteBackgroundImage(id);
+    const { settings } = get();
+    set({
+      backgrounds: get().backgrounds.filter((b) => b.id !== id),
+      settings: settings.backgroundId === id ? { ...settings, backgroundId: undefined } : settings,
+    });
+    await persist(get());
+  },
 
   addEvent: async (input) => {
     const timestamp = new Date().toISOString();

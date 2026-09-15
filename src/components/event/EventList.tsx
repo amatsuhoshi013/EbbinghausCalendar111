@@ -35,6 +35,7 @@ export function EventList({
   const selectedDate = useAppStore((s) => s.settings.selectedDate);
   const events = useAppStore((s) => s.events);
   const categories = useAppStore((s) => s.categories);
+  const primaryColor = useAppStore((s) => s.settings.primaryColor ?? "#4a6cf7");
   const toggleCompleted = useAppStore((s) => s.toggleCompleted);
   const gotoToday = useAppStore((s) => s.gotoToday);
   const today = todayISO();
@@ -72,7 +73,7 @@ export function EventList({
         )}
         {entries.map((event) => {
           const status = getEventStatus(event, today);
-          const color = eventColor(event, categories);
+          const color = eventColor(event, categories, primaryColor);
           const category = categories.find((c) => c.id === event.categoryId);
           return (
             <article

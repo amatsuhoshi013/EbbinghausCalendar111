@@ -1,11 +1,9 @@
 import { useRef } from "react";
-import { BarChart3, CalendarDays, Download, Settings, Upload } from "lucide-react";
+import { Download, Upload } from "lucide-react";
 import { downloadBackup, parseState } from "../../services/backup";
 import { useAppStore } from "../../stores/appStore";
 
-export function Sidebar() {
-  const page = useAppStore((s) => s.page);
-  const setPage = useAppStore((s) => s.setPage);
+export function DataSettings() {
   const replaceState = useAppStore((s) => s.replaceState);
   const importRef = useRef<HTMLInputElement>(null);
 
@@ -34,42 +32,21 @@ export function Sidebar() {
     }
   };
 
-  const NAV_ITEMS = [
-    { icon: CalendarDays, label: "日历", page: "calendar" as const },
-    { icon: BarChart3, label: "统计", page: "statistics" as const },
-    { icon: Settings, label: "设置", page: "settings" as const },
-  ];
-
   return (
-    <div className="sidebar-inner">
-      <div className="sidebar-brand">
-        <h1>艾宾浩斯日程表</h1>
-        <p>本地日历 · 复习计划</p>
-      </div>
-      <nav className="sidebar-nav">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.label}
-              className={`nav-item${page === item.page ? " active" : ""}`}
-              title={item.label}
-              onClick={() => setPage(item.page)}
-            >
-              <Icon size={18} />
-              <span>{item.label}</span>
-            </button>
-          );
-        })}
-      </nav>
-      <div className="sidebar-foot">
-        <div className="sidebar-data">
-          <button className="btn ghost data-btn" onClick={exportJSON}>
-            <Download size={14} />
+    <div className="setting-list">
+      <p className="panel-sub">
+        备份文件包含事项、计划、分类与全部外观设置（底图图片请单独在「背景」中重新选择）。旧版 v1
+        备份文件在导入时同样会自动识别。
+      </p>
+      <div className="setting-row">
+        <span className="setting-label">数据备份</span>
+        <div className="background-actions">
+          <button className="btn primary" onClick={exportJSON}>
+            <Download size={15} />
             导出 JSON
           </button>
-          <button className="btn ghost data-btn" onClick={() => importRef.current?.click()}>
-            <Upload size={14} />
+          <button className="btn ghost" onClick={() => importRef.current?.click()}>
+            <Upload size={15} />
             导入 JSON
           </button>
           <input
@@ -84,7 +61,6 @@ export function Sidebar() {
             }}
           />
         </div>
-        <p className="data-hint">数据保存在本机</p>
       </div>
     </div>
   );
