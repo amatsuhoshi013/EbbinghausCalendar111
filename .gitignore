@@ -4,3 +4,7 @@ dist/
 .DS_Store
 gui-test-screenshots/
 /Ebbinghaus_backup_????-??-??.json
+src-tauri/target/
+src-tauri/gen/
+/icon-source.png
+/release/
