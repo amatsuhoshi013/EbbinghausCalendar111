@@ -1,0 +1,71 @@
+{
+  "version": 1,
+  "settings": {
+    "defaultIntervals": [
+      1,
+      2,
+      4,
+      7,
+      15
+    ],
+    "compactMode": true,
+    "reviewMinutes": 5
+  },
+  "plans": [
+    {
+      "id": "87e6fad8-43d4-4e1a-a648-247a8473b777",
+      "title": "药理拟胆碱药",
+      "startDate": "2026-09-09",
+      "intervals": [
+        1,
+        2,
+        4,
+        7,
+        15
+      ],
+      "note": "",
+      "createdAt": "2026-09-13T07:51:12.399Z"
+    },
+    {
+      "id": "010a4c15-ceef-4ccd-a1f3-c1eae72b7e5f",
+      "title": "0830单词复习",
+      "startDate": "2026-09-09",
+      "intervals": [
+        1,
+        2,
+        4,
+        7,
+        15
+      ],
+      "note": "",
+      "createdAt": "2026-09-13T07:50:42.493Z"
+    },
+    {
+      "id": "29ed9d13-cca8-406d-8279-2ae1e18cd967",
+      "title": "0909单词新学",
+      "startDate": "2026-09-09",
+      "intervals": [
+        1,
+        2,
+        4,
+        7,
+        15
+      ],
+      "note": "",
+      "createdAt": "2026-09-13T07:50:25.855Z"
+    }
+  ],
+  "completions": {
+    "87e6fad8-43d4-4e1a-a648-247a8473b777": {
+      "2026-09-13": true
+    },
+    "010a4c15-ceef-4ccd-a1f3-c1eae72b7e5f": {
+      "2026-09-13": true
+    },
+    "29ed9d13-cca8-406d-8279-2ae1e18cd967": {
+      "2026-09-13": true
+    }
+  },
+  "selectedDate": "2026-09-10",
+  "currentView": "month"
+}
