@@ -22,6 +22,7 @@ export function StatisticsPage() {
                 ["today", "今天"],
                 ["week", "本周"],
                 ["month", "本月"],
+                ["year", "今年"],
                 ["all", "全部"],
               ] as [RangeKey, string][]
             ).map(([key, label]) => (

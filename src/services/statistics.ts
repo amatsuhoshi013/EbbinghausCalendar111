@@ -4,11 +4,16 @@ import type { ReviewPlan } from "../types/review";
 import { addDays, shortDate, toISODate, todayISO } from "../utils/date";
 import { getEventStatus } from "../utils/status";
 
-export type RangeKey = "today" | "week" | "month" | "all";
+export type RangeKey = "today" | "week" | "month" | "year" | "all";
 
 export interface RangeBounds {
   from: string;
   to: string;
+}
+
+/** 完成率：保留一位小数（0-100）。 */
+function rate(done: number, total: number): number {
+  return total ? Math.round((done / total) * 1000) / 10 : 0;
 }
 
 /** 统计范围边界：本周按周日开始（与月历一致）；all 不过滤。 */
@@ -27,6 +32,10 @@ export function rangeBounds(range: RangeKey, today: string = todayISO()): RangeB
       last.setMonth(last.getMonth() + 1);
       last.setDate(0);
       return { from: `${month}-01`, to: toISODate(last) };
+    }
+    case "year": {
+      const year = today.slice(0, 4);
+      return { from: `${year}-01-01`, to: `${year}-12-31` };
     }
     case "all":
       return { from: "", to: "" };
@@ -57,7 +66,7 @@ export function getOverallStats(events: Event[], range: RangeKey, today: string 
     completed,
     uncompleted: scoped.length - completed,
     overdue,
-    completionRate: scoped.length ? Math.round((completed / scoped.length) * 100) : 0,
+    completionRate: rate(completed, scoped.length),
   };
 }
 
@@ -87,7 +96,7 @@ export function getCategoryStats(
       color: category.color,
       total: items.length,
       completed: items.filter((e) => e.completed).length,
-      completionRate: items.length ? Math.round((items.filter((e) => e.completed).length / items.length) * 100) : 0,
+      completionRate: rate(items.filter((e) => e.completed).length, items.length),
     });
   }
   const uncategorized = scoped.filter((e) => !e.categoryId);
@@ -97,7 +106,7 @@ export function getCategoryStats(
       color: "#94a3b8",
       total: uncategorized.length,
       completed: uncategorized.filter((e) => e.completed).length,
-      completionRate: Math.round((uncategorized.filter((e) => e.completed).length / uncategorized.length) * 100),
+      completionRate: rate(uncategorized.filter((e) => e.completed).length, uncategorized.length),
     });
   }
   return rows.sort((a, b) => b.total - a.total);
@@ -133,14 +142,14 @@ export function getReviewStats(events: Event[], reviewPlans: ReviewPlan[]): Revi
       label: index === 0 ? "Day 0" : `R${index}`,
       total: items.length,
       completed: done,
-      rate: items.length ? Math.round((done / items.length) * 100) : 0,
+      rate: rate(done, items.length),
     });
   }
   return {
     planCount: reviewPlans.length,
     eventCount: reviewEvents.length,
     completed,
-    completionRate: reviewEvents.length ? Math.round((completed / reviewEvents.length) * 100) : 0,
+    completionRate: rate(completed, reviewEvents.length),
     byIndex,
   };
 }
@@ -177,7 +186,7 @@ export function getDailyTrend(events: Event[], days: number, today: string = tod
       completed,
       overdue: due.filter((e) => !e.completed && date < today).length,
       created: events.filter((e) => toISODate(new Date(e.createdAt)) === date).length,
-      rate: due.length ? Math.round((completed / due.length) * 100) : null,
+      rate: due.length ? rate(completed, due.length) : null,
     });
   }
   return points;

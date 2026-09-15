@@ -32,6 +32,7 @@ describe("rangeBounds", () => {
     // 2026-09-15 是周二 → 本周从周日 9/13 到周六 9/19
     expect(rangeBounds("week", TODAY)).toEqual({ from: "2026-09-13", to: "2026-09-19" });
     expect(rangeBounds("month", TODAY)).toEqual({ from: "2026-09-01", to: "2026-09-30" });
+    expect(rangeBounds("year", TODAY)).toEqual({ from: "2026-01-01", to: "2026-12-31" });
     expect(rangeBounds("all", TODAY)).toEqual({ from: "", to: "" });
   });
 });
@@ -54,6 +55,7 @@ describe("getOverallStats", () => {
     expect(getOverallStats(events, "today", TODAY).total).toBe(1);
     expect(getOverallStats(events, "month", TODAY).total).toBe(4);
     expect(getOverallStats(events, "week", TODAY).total).toBe(2);
+    expect(getOverallStats(events, "year", TODAY).total).toBe(5);
   });
 });
 
@@ -91,7 +93,7 @@ describe("getReviewStats", () => {
     expect(stats.planCount).toBe(1);
     expect(stats.eventCount).toBe(3);
     expect(stats.completed).toBe(2);
-    expect(stats.completionRate).toBe(67);
+    expect(stats.completionRate).toBe(66.7);
     expect(stats.byIndex.map((i) => i.label)).toEqual(["Day 0", "R1", "R2"]);
     expect(stats.byIndex[2]).toMatchObject({ total: 1, completed: 0, rate: 0 });
   });
