@@ -6,7 +6,15 @@ import { CalendarDay } from "./CalendarDay";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
-export function MonthCalendar() {
+export function MonthCalendar({
+  onCreate,
+  onEdit,
+  onMoveEvent,
+}: {
+  onCreate: (date: string) => void;
+  onEdit: (event: Event) => void;
+  onMoveEvent: (eventId: string, targetDate: string) => void;
+}) {
   const selectedDate = useAppStore((s) => s.settings.selectedDate);
   const events = useAppStore((s) => s.events);
   const month = monthKey(selectedDate);
@@ -29,7 +37,15 @@ export function MonthCalendar() {
         </div>
       ))}
       {days.map((iso) => (
-        <CalendarDay key={iso} iso={iso} month={month} entries={byDate.get(iso) ?? []} />
+        <CalendarDay
+          key={iso}
+          iso={iso}
+          month={month}
+          entries={byDate.get(iso) ?? []}
+          onCreate={onCreate}
+          onEdit={onEdit}
+          onMoveEvent={onMoveEvent}
+        />
       ))}
     </div>
   );

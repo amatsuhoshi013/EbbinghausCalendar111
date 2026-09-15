@@ -25,6 +25,11 @@ export class MemoryStorageAdapter implements StorageAdapter {
   async save(state: V2State): Promise<void> {
     this.data = state;
   }
+
+  /** 测试用：读取最近一次保存的快照。 */
+  getSnapshot(): V2State | null {
+    return this.data;
+  }
 }
 
 const V2_DB = "ebbinghaus-calendar-v2";

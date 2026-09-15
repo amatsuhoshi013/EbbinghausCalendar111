@@ -1,24 +1,72 @@
 import { create } from "zustand";
-import { createReviewPlanEntities } from "../services/reviews";
+import { withDefaultCategories } from "../services/categories";
+import { createReviewPlanEntities, resolveRule } from "../services/reviews";
+import { detachReviewEvent, moveReviewEvent, rescheduleReviewEvents, type MoveReviewMode } from "../services/reviewPlanService";
 import type { StorageAdapter } from "../services/storage";
-import type { ReviewRule } from "../types/review";
+import type { Event, Priority } from "../types/event";
+import type { ReviewPlan, ReviewRule } from "../types/review";
 import type { V2State } from "../types/state";
 import { toISODate, todayISO } from "../utils/date";
 import { DEFAULT_INTERVALS } from "../utils/ebbinghaus";
 import { uid } from "../utils/id";
+
+export interface NewEventInput {
+  title: string;
+  date: string;
+  description?: string;
+  categoryId?: string;
+  color?: string;
+  priority?: Priority;
+}
+
+export interface EventPatch {
+  title?: string;
+  description?: string;
+  date?: string;
+  categoryId?: string;
+  color?: string;
+  priority?: Priority;
+}
 
 export interface NewReviewPlanInput {
   title: string;
   startDate: string;
   intervals: number[];
   note?: string;
+  categoryId?: string;
+  color?: string;
+  priority?: Priority;
+}
+
+export interface ReviewPlanPatch {
+  title?: string;
+  startDate?: string;
+  intervals?: number[];
+  note?: string;
+  categoryId?: string;
+  color?: string;
+  priority?: Priority;
 }
 
 interface AppState extends V2State {
   ready: boolean;
+  addEvent(input: NewEventInput): Promise<void>;
+  updateEvent(eventId: string, patch: EventPatch): Promise<void>;
+  deleteEvent(eventId: string): Promise<void>;
+  moveEvent(eventId: string, date: string): Promise<void>;
+  duplicateEvent(eventId: string): Promise<void>;
   addReviewPlan(input: NewReviewPlanInput): Promise<void>;
+  updateReviewPlan(
+    planId: string,
+    patch: ReviewPlanPatch,
+    mode: MoveReviewMode,
+    sourceEventId?: string,
+  ): Promise<void>;
+  moveReviewEventById(eventId: string, newDate: string, mode: MoveReviewMode): Promise<void>;
+  deleteReviewEvent(eventId: string): Promise<void>;
+  deleteReviewPlan(planId: string): Promise<void>;
   toggleCompleted(eventId: string): Promise<void>;
-  deletePlan(planId: string): Promise<void>;
+  replaceState(state: V2State): Promise<void>;
   selectDate(date: string): void;
   selectMonth(month: string): void;
   shiftMonth(delta: number): void;
@@ -48,7 +96,7 @@ async function persist(state: AppState): Promise<void> {
   await storage?.save(toV2(state));
 }
 
-/** 首次启动（无任何历史数据）时的初始状态：标准规则 + 一个示例计划。 */
+/** 首次启动（无任何历史数据）时的初始状态：默认分类 + 标准规则 + 一个示例计划。 */
 export function createInitialV2State(): V2State {
   const timestamp = new Date().toISOString();
   const standard: ReviewRule = {
@@ -69,7 +117,7 @@ export function createInitialV2State(): V2State {
   );
   return {
     version: 2,
-    categories: [],
+    categories: withDefaultCategories([]),
     events,
     reviewPlans: [plan],
     reviewRules: [standard],
@@ -84,17 +132,154 @@ export function createInitialV2State(): V2State {
   };
 }
 
+function eventFields(input: { note?: string; categoryId?: string; color?: string; priority?: Priority }) {
+  return {
+    description: input.note || undefined,
+    categoryId: input.categoryId,
+    color: input.color,
+    priority: input.priority,
+  };
+}
+
 export const useAppStore = create<AppState>()((set, get) => ({
   ...createInitialV2State(),
   ready: false,
 
+  addEvent: async (input) => {
+    const timestamp = new Date().toISOString();
+    const event: Event = {
+      id: uid(),
+      title: input.title,
+      description: input.description,
+      date: input.date,
+      completed: false,
+      categoryId: input.categoryId,
+      color: input.color,
+      priority: input.priority,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    set({
+      events: [event, ...get().events],
+      settings: { ...get().settings, selectedDate: input.date, currentView: "month" },
+    });
+    await persist(get());
+  },
+
+  updateEvent: async (eventId, patch) => {
+    set({
+      events: get().events.map((e) =>
+        e.id === eventId ? { ...e, ...patch, updatedAt: new Date().toISOString() } : e,
+      ),
+    });
+    await persist(get());
+  },
+
+  deleteEvent: async (eventId) => {
+    set({ events: get().events.filter((e) => e.id !== eventId) });
+    await persist(get());
+  },
+
+  moveEvent: async (eventId, date) => {
+    set({
+      events: get().events.map((e) =>
+        e.id === eventId ? { ...e, date, updatedAt: new Date().toISOString() } : e,
+      ),
+    });
+    await persist(get());
+  },
+
+  duplicateEvent: async (eventId) => {
+    const source = get().events.find((e) => e.id === eventId);
+    if (!source) return;
+    const timestamp = new Date().toISOString();
+    const copy: Event = {
+      ...source,
+      id: uid(),
+      title: `${source.title} 副本`,
+      completed: false,
+      reviewPlanId: undefined,
+      reviewIndex: undefined,
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    };
+    set({ events: [copy, ...get().events] });
+    await persist(get());
+  },
+
   addReviewPlan: async (input) => {
     const created = createReviewPlanEntities(input, get().reviewRules);
+    const decorated = created.events.map((e) => ({ ...e, ...eventFields(input) }));
     set({
       reviewPlans: [created.plan, ...get().reviewPlans],
       reviewRules: created.rules,
-      events: [...created.events, ...get().events],
+      events: [...decorated, ...get().events],
       settings: { ...get().settings, selectedDate: input.startDate, currentView: "month" },
+    });
+    await persist(get());
+  },
+
+  updateReviewPlan: async (planId, patch, mode, sourceEventId) => {
+    const state = get();
+    const plan = state.reviewPlans.find((p) => p.id === planId);
+    if (!plan) return;
+    const now = new Date();
+    const intervals = patch.intervals ?? state.reviewRules.find((r) => r.id === plan.ruleId)?.intervals ?? [];
+    const resolved = resolveRule(intervals, state.reviewRules, now);
+    const startDateChanged = patch.startDate !== undefined && patch.startDate !== plan.startDate;
+
+    const patchedPlan: ReviewPlan = {
+      ...plan,
+      title: patch.title ?? plan.title,
+      startDate: startDateChanged && mode === "shift" ? patch.startDate! : plan.startDate,
+      ruleId: resolved.rule.id,
+      updatedAt: now.toISOString(),
+    };
+    const common = eventFields({ note: patch.note, categoryId: patch.categoryId, color: patch.color, priority: patch.priority });
+
+    let events = state.events;
+    if (startDateChanged && mode === "detach" && sourceEventId) {
+      // 仅本次事项：该次复习脱离计划移到新日期；计划的其余事项照常应用标题/备注/分类修改
+      events = detachReviewEvent(events, sourceEventId, patch.startDate!, now);
+    } else if (startDateChanged || patch.intervals) {
+      // 同步移动 / 重新生成：从（新的）起始日按规则重算，完成状态按复习序号保留
+      ({ events } = rescheduleReviewEvents(patchedPlan, resolved.rule, events, patchedPlan.startDate, now));
+    }
+    // 计划级字段同步到该计划的所有事件
+    events = events.map((e) =>
+      e.reviewPlanId === planId ? { ...e, title: patchedPlan.title, ...common } : e,
+    );
+
+    set({
+      reviewPlans: state.reviewPlans.map((p) => (p.id === planId ? patchedPlan : p)),
+      reviewRules: resolved.rules,
+      events,
+    });
+    await persist(get());
+  },
+
+  moveReviewEventById: async (eventId, newDate, mode) => {
+    const state = get();
+    const event = state.events.find((e) => e.id === eventId);
+    if (!event?.reviewPlanId) return;
+    const plan = state.reviewPlans.find((p) => p.id === event.reviewPlanId);
+    const rule = state.reviewRules.find((r) => r.id === plan?.ruleId);
+    if (!plan || !rule) return;
+    const result = moveReviewEvent(plan, rule, state.events, eventId, newDate, mode);
+    const plans = result.plan === plan ? state.reviewPlans : state.reviewPlans.map((p) => (p.id === plan.id ? result.plan : p));
+    set({ events: result.events, reviewPlans: plans });
+    await persist(get());
+  },
+
+  deleteReviewEvent: async (eventId) => {
+    set({ events: get().events.filter((e) => e.id !== eventId) });
+    await persist(get());
+  },
+
+  deleteReviewPlan: async (planId) => {
+    set({
+      reviewPlans: get().reviewPlans.filter((p) => p.id !== planId),
+      events: get().events.filter((e) => e.reviewPlanId !== planId),
     });
     await persist(get());
   },
@@ -108,10 +293,15 @@ export const useAppStore = create<AppState>()((set, get) => ({
     await persist(get());
   },
 
-  deletePlan: async (planId) => {
+  replaceState: async (next) => {
     set({
-      reviewPlans: get().reviewPlans.filter((p) => p.id !== planId),
-      events: get().events.filter((e) => e.reviewPlanId !== planId),
+      version: 2,
+      categories: withDefaultCategories(next.categories),
+      events: next.events,
+      reviewPlans: next.reviewPlans,
+      reviewRules: next.reviewRules,
+      settings: next.settings,
+      backgrounds: next.backgrounds,
     });
     await persist(get());
   },

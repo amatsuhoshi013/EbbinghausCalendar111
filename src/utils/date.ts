@@ -24,6 +24,13 @@ export function monthKey(iso: string): string {
   return iso.slice(0, 7);
 }
 
+/** toISO - fromISO 的天数差（整数，可为负）。 */
+export function diffDays(fromISO: string, toISO: string): number {
+  const from = new Date(`${fromISO}T00:00:00`).getTime();
+  const to = new Date(`${toISO}T00:00:00`).getTime();
+  return Math.round((to - from) / 86400000);
+}
+
 export function formatDate(iso: string): string {
   const d = new Date(`${iso}T00:00:00`);
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 周${WEEKDAYS[d.getDay()]}`;

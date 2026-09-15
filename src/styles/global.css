@@ -261,30 +261,31 @@ textarea {
   border-radius: 6px;
   background: var(--dot-bg);
   border: 1px solid var(--dot-border);
+  border-left: 3px solid var(--primary);
+  cursor: pointer;
 }
 
-.day-event::before {
-  content: "";
-  width: 7px;
-  height: 7px;
-  border-radius: 999px;
-  flex-shrink: 0;
+.day-event:hover {
+  background: var(--hover-bg);
 }
 
-.st-done::before {
-  background: var(--success);
+.day-event.st-done {
+  text-decoration: line-through;
+  opacity: 0.6;
 }
 
-.st-overdue::before {
-  background: var(--danger);
+.day-event.st-overdue {
+  background: var(--pill-overdue-bg);
 }
 
-.st-today::before {
-  background: var(--warning);
+.day-event.st-today {
+  background: var(--pill-today-bg);
 }
 
-.st-future::before {
-  background: var(--primary);
+.day.drop-target {
+  border-color: var(--primary);
+  background: var(--sidebar-active);
+  box-shadow: inset 0 0 0 2px rgba(74, 108, 247, 0.25);
 }
 
 .day-more {
@@ -365,12 +366,33 @@ textarea {
 
 .event-row {
   border: 1px solid var(--line);
+  border-left: 3px solid var(--primary);
   border-radius: 16px;
-  padding: 14px;
+  padding: 12px 14px;
   background: linear-gradient(180deg, #fff, var(--task-bg));
   display: flex;
   flex-direction: column;
   gap: 10px;
+  cursor: pointer;
+  transition: box-shadow 0.15s ease;
+}
+
+.event-row:hover {
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+}
+
+.event-row-side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.panel-tip {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 11px;
 }
 
 .event-row-main {
@@ -445,6 +467,8 @@ textarea {
 
 .dialog {
   width: min(640px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
 }
 
 .dialog-head {
@@ -505,6 +529,182 @@ textarea {
   border-radius: 10px;
   padding: 8px 12px;
   font-size: 13px;
+}
+
+/* ---------- 类型切换 / 色板 / 策略选择 ---------- */
+
+.type-toggle {
+  display: inline-flex;
+  gap: 8px;
+  padding: 5px;
+  background: var(--tab-bg);
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+
+.type-option {
+  border: 0;
+  background: transparent;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--tab-text);
+  font-size: 13px;
+}
+
+.type-option.active {
+  background: #fff;
+  color: var(--primary-2);
+  font-weight: 600;
+  box-shadow: 0 6px 14px rgba(37, 71, 208, 0.12);
+}
+
+.field select {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 13px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.swatches {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.swatch {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+  padding: 0;
+}
+
+.swatch.active {
+  border-color: var(--text);
+  box-shadow: 0 0 0 2px #fff inset;
+}
+
+.swatch-auto {
+  width: auto;
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--muted);
+  background: var(--dot-bg);
+  border: 1px solid var(--line);
+}
+
+.swatch-auto.active {
+  border-color: var(--primary);
+  color: var(--primary-2);
+  box-shadow: none;
+}
+
+.choice-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--task-bg);
+}
+
+.choice-hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.choice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--card);
+  cursor: pointer;
+}
+
+.choice.active {
+  border-color: var(--primary);
+  background: var(--sidebar-active);
+}
+
+.choice input {
+  margin-top: 3px;
+}
+
+.choice span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.choice small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.dialog-narrow {
+  width: min(440px, 100%);
+}
+
+.dialog-desc {
+  margin: 0 0 14px;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.dialog-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.option-btn {
+  width: 100%;
+  justify-content: flex-start;
+  border-radius: 12px;
+  text-align: left;
+  padding: 12px 14px;
+}
+
+.option-btn span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.option-btn small {
+  font-weight: 400;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* ---------- 侧边栏数据操作 ---------- */
+
+.sidebar-data {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.data-btn {
+  justify-content: center;
+}
+
+.data-hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
 }
 
 /* ---------- 响应式 ---------- */

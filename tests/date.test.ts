@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addDays, getCalendarDays, monthKey, shortDate, toISODate, todayISO } from "../src/utils/date";
+import { addDays, diffDays, getCalendarDays, monthKey, shortDate, toISODate, todayISO } from "../src/utils/date";
 
 describe("toISODate", () => {
   it("formats with zero padding", () => {
@@ -32,6 +32,16 @@ describe("monthKey / shortDate", () => {
 
   it("formats month/day", () => {
     expect(shortDate("2026-09-15")).toBe("9/15");
+  });
+});
+
+describe("diffDays", () => {
+  it("computes signed day differences", () => {
+    expect(diffDays("2026-09-09", "2026-09-11")).toBe(2);
+    expect(diffDays("2026-09-11", "2026-09-09")).toBe(-2);
+    expect(diffDays("2026-09-09", "2026-09-09")).toBe(0);
+    expect(diffDays("2026-09-30", "2026-10-01")).toBe(1);
+    expect(diffDays("2026-12-31", "2027-01-01")).toBe(1);
   });
 });
 
