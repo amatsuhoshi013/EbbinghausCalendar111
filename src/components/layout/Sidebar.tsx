@@ -3,13 +3,9 @@ import { BarChart3, CalendarDays, Download, Settings, Upload } from "lucide-reac
 import { downloadBackup, parseState } from "../../services/backup";
 import { useAppStore } from "../../stores/appStore";
 
-const NAV_ITEMS = [
-  { icon: CalendarDays, label: "日历", active: true },
-  { icon: BarChart3, label: "统计", disabled: true },
-  { icon: Settings, label: "设置", disabled: true },
-];
-
 export function Sidebar() {
+  const page = useAppStore((s) => s.page);
+  const setPage = useAppStore((s) => s.setPage);
   const replaceState = useAppStore((s) => s.replaceState);
   const importRef = useRef<HTMLInputElement>(null);
 
@@ -38,6 +34,12 @@ export function Sidebar() {
     }
   };
 
+  const NAV_ITEMS = [
+    { icon: CalendarDays, label: "日历", page: "calendar" as const },
+    { icon: BarChart3, label: "统计", page: "statistics" as const },
+    { icon: Settings, label: "设置", disabled: true },
+  ];
+
   return (
     <div className="sidebar-inner">
       <div className="sidebar-brand">
@@ -45,18 +47,24 @@ export function Sidebar() {
         <p>本地日历 · 复习计划</p>
       </div>
       <nav className="sidebar-nav">
-        {NAV_ITEMS.map(({ icon: Icon, label, active, disabled }) => (
-          <button
-            key={label}
-            className={`nav-item${active ? " active" : ""}`}
-            disabled={disabled}
-            title={disabled ? "即将推出" : label}
-          >
-            <Icon size={18} />
-            <span>{label}</span>
-            {disabled && <em className="nav-tag">即将推出</em>}
-          </button>
-        ))}
+        {NAV_ITEMS.map((item) => {
+          const disabled = "disabled" in item;
+          const targetPage = "page" in item ? item.page : null;
+          const Icon = item.icon;
+          return (
+            <button
+              key={item.label}
+              className={`nav-item${targetPage && page === targetPage ? " active" : ""}`}
+              disabled={disabled}
+              title={disabled ? "即将推出" : item.label}
+              onClick={targetPage ? () => setPage(targetPage) : undefined}
+            >
+              <Icon size={18} />
+              <span>{item.label}</span>
+              {disabled && <em className="nav-tag">即将推出</em>}
+            </button>
+          );
+        })}
       </nav>
       <div className="sidebar-foot">
         <div className="sidebar-data">

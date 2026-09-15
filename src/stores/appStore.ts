@@ -21,10 +21,13 @@ export interface NewEventInput {
 
 export interface EventPatch {
   title?: string;
-  description?: string;
+  /** null 表示清除备注 */
+  description?: string | null;
   date?: string;
-  categoryId?: string;
-  color?: string;
+  /** null 表示清除分类 */
+  categoryId?: string | null;
+  /** null 表示清除颜色覆盖 */
+  color?: string | null;
   priority?: Priority;
 }
 
@@ -42,14 +45,20 @@ export interface ReviewPlanPatch {
   title?: string;
   startDate?: string;
   intervals?: number[];
-  note?: string;
-  categoryId?: string;
-  color?: string;
+  /** null 表示清除备注 */
+  note?: string | null;
+  /** null 表示清除分类 */
+  categoryId?: string | null;
+  /** null 表示清除颜色覆盖 */
+  color?: string | null;
   priority?: Priority;
 }
 
 interface AppState extends V2State {
   ready: boolean;
+  /** 当前页面（会话级 UI 状态，不持久化） */
+  page: "calendar" | "statistics";
+  setPage(page: "calendar" | "statistics"): void;
   addEvent(input: NewEventInput): Promise<void>;
   updateEvent(eventId: string, patch: EventPatch): Promise<void>;
   deleteEvent(eventId: string): Promise<void>;
@@ -144,6 +153,9 @@ function eventFields(input: { note?: string; categoryId?: string; color?: string
 export const useAppStore = create<AppState>()((set, get) => ({
   ...createInitialV2State(),
   ready: false,
+  page: "calendar",
+
+  setPage: (page) => set({ page }),
 
   addEvent: async (input) => {
     const timestamp = new Date().toISOString();
@@ -168,9 +180,18 @@ export const useAppStore = create<AppState>()((set, get) => ({
 
   updateEvent: async (eventId, patch) => {
     set({
-      events: get().events.map((e) =>
-        e.id === eventId ? { ...e, ...patch, updatedAt: new Date().toISOString() } : e,
-      ),
+      events: get().events.map((e) => {
+        if (e.id !== eventId) return e;
+        // 只应用 patch 中显式提供的字段，未提供的字段保持原值
+        const next: Event = { ...e, updatedAt: new Date().toISOString() };
+        if (patch.title !== undefined) next.title = patch.title;
+        if (patch.description !== undefined) next.description = patch.description || undefined;
+        if (patch.date !== undefined) next.date = patch.date;
+        if (patch.categoryId !== undefined) next.categoryId = patch.categoryId ?? undefined;
+        if (patch.color !== undefined) next.color = patch.color ?? undefined;
+        if (patch.priority !== undefined) next.priority = patch.priority;
+        return next;
+      }),
     });
     await persist(get());
   },
@@ -235,7 +256,6 @@ export const useAppStore = create<AppState>()((set, get) => ({
       ruleId: resolved.rule.id,
       updatedAt: now.toISOString(),
     };
-    const common = eventFields({ note: patch.note, categoryId: patch.categoryId, color: patch.color, priority: patch.priority });
 
     let events = state.events;
     if (startDateChanged && mode === "detach" && sourceEventId) {
@@ -245,10 +265,16 @@ export const useAppStore = create<AppState>()((set, get) => ({
       // 同步移动 / 重新生成：从（新的）起始日按规则重算，完成状态按复习序号保留
       ({ events } = rescheduleReviewEvents(patchedPlan, resolved.rule, events, patchedPlan.startDate, now));
     }
-    // 计划级字段同步到该计划的所有事件
-    events = events.map((e) =>
-      e.reviewPlanId === planId ? { ...e, title: patchedPlan.title, ...common } : e,
-    );
+    // 计划级字段同步到该计划的所有事件：只应用 patch 中显式提供的字段，未提供的保持原值
+    events = events.map((e) => {
+      if (e.reviewPlanId !== planId) return e;
+      const next: Event = { ...e, title: patchedPlan.title };
+      if (patch.note !== undefined) next.description = patch.note || undefined;
+      if (patch.categoryId !== undefined) next.categoryId = patch.categoryId ?? undefined;
+      if (patch.color !== undefined) next.color = patch.color ?? undefined;
+      if (patch.priority !== undefined) next.priority = patch.priority;
+      return next;
+    });
 
     set({
       reviewPlans: state.reviewPlans.map((p) => (p.id === planId ? patchedPlan : p)),

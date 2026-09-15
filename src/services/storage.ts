@@ -1,4 +1,5 @@
 import type { V1State, V2State } from "../types/state";
+import { isValidV2State } from "./backup";
 import { migrateV1ToV2 } from "./migration";
 
 /**
@@ -79,7 +80,7 @@ export class IndexedDBStorageAdapter implements StorageAdapter {
   async load(): Promise<V2State | null> {
     try {
       const v2 = await this.readIndexedDB(V2_DB, V2_KEY);
-      if (v2 && (v2 as V2State).version === 2) return v2 as V2State;
+      if (v2 && isValidV2State(v2)) return v2;
       const legacy = await this.readIndexedDB(LEGACY_DB, LEGACY_KEY);
       if (legacy && (legacy as { version?: number }).version === 1) {
         const migrated = migrateV1ToV2(legacy as unknown as V1State);
@@ -91,7 +92,10 @@ export class IndexedDBStorageAdapter implements StorageAdapter {
     }
     try {
       const raw = localStorage.getItem(FALLBACK_KEY);
-      if (raw) return JSON.parse(raw) as V2State;
+      if (raw) {
+        const parsed: unknown = JSON.parse(raw);
+        if (isValidV2State(parsed)) return parsed;
+      }
     } catch {
       // 忽略损坏的回退数据
     }

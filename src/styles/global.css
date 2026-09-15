@@ -707,6 +707,311 @@ textarea {
   text-align: center;
 }
 
+/* ---------- 统计页 ---------- */
+
+.statistics-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.stats-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.segment {
+  display: inline-flex;
+  gap: 6px;
+  padding: 5px;
+  background: var(--tab-bg);
+  border-radius: 999px;
+}
+
+.segment-option {
+  border: 0;
+  background: transparent;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  color: var(--tab-text);
+  font-size: 12px;
+}
+
+.segment-option.active {
+  background: #fff;
+  color: var(--primary-2);
+  font-weight: 600;
+  box-shadow: 0 6px 14px rgba(37, 71, 208, 0.12);
+}
+
+.metric-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.metric {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  background: linear-gradient(180deg, #fff, var(--task-bg));
+}
+
+.metric-value {
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.metric-label {
+  margin-top: 6px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.metric-total .metric-value { color: var(--text); }
+.metric-done .metric-value { color: var(--success); }
+.metric-todo .metric-value { color: var(--warning); }
+.metric-rate .metric-value { color: var(--primary); }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.overdue-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.overdue-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--pill-overdue-border);
+  border-radius: 12px;
+  background: var(--pill-overdue-bg);
+  color: var(--pill-overdue-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.overdue-item:hover {
+  border-color: var(--danger);
+}
+
+.overdue-title {
+  font-weight: 600;
+  font-size: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.overdue-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.category-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.category-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.category-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 64px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.category-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.category-bar-wrap {
+  flex: 1;
+  height: 10px;
+  background: var(--dot-bg);
+  border: 1px solid var(--dot-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.category-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  opacity: 0.85;
+}
+
+.category-nums {
+  font-size: 12px;
+  color: var(--muted);
+  flex-shrink: 0;
+  min-width: 84px;
+  text-align: right;
+}
+
+.review-summary {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 14px;
+}
+
+.review-summary strong {
+  color: var(--text);
+  font-size: 16px;
+}
+
+.review-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.review-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-bar-label {
+  width: 44px;
+  font-size: 12px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+
+.review-bar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--dot-bg);
+  border: 1px solid var(--dot-border);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.review-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--primary);
+  border-radius: 999px;
+}
+
+.review-bar-fill.full {
+  background: var(--success);
+}
+
+.review-bar-nums {
+  font-size: 12px;
+  color: var(--muted);
+  flex-shrink: 0;
+  min-width: 76px;
+  text-align: right;
+}
+
+.trend-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.trend-legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.trend-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+}
+
+.legend-dot.done { background: var(--success); }
+.legend-dot.overdue { background: var(--danger); }
+.legend-dot.created { background: var(--primary); opacity: 0.4; }
+
+.trend-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 140px;
+  padding-top: 8px;
+}
+
+.trend-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  height: 100%;
+  min-width: 0;
+}
+
+.trend-stack {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 1px;
+}
+
+.trend-bar {
+  display: block;
+  border-radius: 3px 3px 0 0;
+  min-height: 2px;
+}
+
+.trend-bar.done { background: var(--success); }
+.trend-bar.overdue { background: var(--danger); }
+.trend-bar.created { background: var(--primary); opacity: 0.4; }
+
+.trend-label {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 /* ---------- 响应式 ---------- */
 
 @media (max-width: 1080px) {
@@ -726,5 +1031,13 @@ textarea {
 
   .calendar-page {
     grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metric-cards {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

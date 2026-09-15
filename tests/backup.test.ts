@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { parseState, serializeState, validateV2State } from "../src/services/backup";
+import { isValidV2State, parseState, serializeState, validateV2State } from "../src/services/backup";
 import { migrateV1ToV2 } from "../src/services/migration";
 import type { V1State, V2State } from "../src/types/state";
 
@@ -31,6 +31,17 @@ describe("validateV2State", () => {
     const badSelected = validState();
     badSelected.settings.selectedDate = "tomorrow";
     expect(() => validateV2State(badSelected)).toThrow();
+  });
+});
+
+describe("isValidV2State（存储层加载时的类型守卫）", () => {
+  it("accepts valid and rejects invalid without throwing", () => {
+    expect(isValidV2State(validState())).toBe(true);
+    expect(isValidV2State(null)).toBe(false);
+    expect(isValidV2State({ version: 3 })).toBe(false);
+    const bad = validState();
+    (bad.events[0] as { completed: unknown }).completed = "yes";
+    expect(isValidV2State(bad)).toBe(false);
   });
 });
 

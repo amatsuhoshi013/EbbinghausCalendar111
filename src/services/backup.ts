@@ -36,6 +36,16 @@ export function parseState(text: string): V2State {
   return parsed;
 }
 
+/** 类型守卫形式的校验：存储层加载外部数据时统一走这里。 */
+export function isValidV2State(input: unknown): input is V2State {
+  try {
+    validateV2State(input);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 /** 下载当前状态为 JSON 备份文件。 */
 export function downloadBackup(state: V2State): void {
   const blob = new Blob([serializeState(state)], { type: "application/json" });

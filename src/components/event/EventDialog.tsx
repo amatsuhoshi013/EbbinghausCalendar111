@@ -84,10 +84,10 @@ export function EventDialog({ initial, defaultDate, onClose }: EventDialogProps)
           title: title.trim(),
           startDate: date,
           intervals,
-          note: common.note,
-          categoryId: common.categoryId,
-          color: common.color,
-          priority: common.priority,
+          note: note.trim() || null,
+          categoryId: categoryId || null,
+          color: color || null,
+          priority,
         },
         strategy,
         initial!.id,
@@ -96,10 +96,10 @@ export function EventDialog({ initial, defaultDate, onClose }: EventDialogProps)
       await updateEvent(initial.id, {
         title: title.trim(),
         date,
-        description: common.note,
-        categoryId: common.categoryId,
-        color: common.color,
-        priority: common.priority,
+        description: note.trim() || null,
+        categoryId: categoryId || null,
+        color: color || null,
+        priority,
       });
     } else if (type === "review") {
       await addReviewPlan({

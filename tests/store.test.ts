@@ -37,6 +37,28 @@ describe("appStore：普通事项", () => {
     expect(updated.date).toBe("2026-09-20");
   });
 
+  it("updateEvent partial patch 不清空未提供的字段，null 表示清除", async () => {
+    await useAppStore.getState().addEvent({
+      title: "开会",
+      date: "2026-09-16",
+      categoryId: "cat-1",
+      color: "#123456",
+      priority: "high",
+      description: "备注",
+    });
+    const id = useAppStore.getState().events.find((e) => e.title === "开会")!.id;
+    // 只改标题：分类/颜色/优先级/备注必须保留
+    await useAppStore.getState().updateEvent(id, { title: "改期会" });
+    const kept = useAppStore.getState().events.find((e) => e.id === id)!;
+    expect(kept).toMatchObject({ categoryId: "cat-1", color: "#123456", priority: "high", description: "备注" });
+    // 显式清除分类与备注
+    await useAppStore.getState().updateEvent(id, { categoryId: null, description: null });
+    const cleared = useAppStore.getState().events.find((e) => e.id === id)!;
+    expect(cleared.categoryId).toBeUndefined();
+    expect(cleared.description).toBeUndefined();
+    expect(cleared.color).toBe("#123456");
+  });
+
   it("moveEvent 移动日期", async () => {
     await useAppStore.getState().addEvent({ title: "开会", date: "2026-09-16" });
     const id = useAppStore.getState().events.find((e) => e.title === "开会")!.id;
@@ -148,6 +170,29 @@ describe("appStore：艾宾浩斯计划", () => {
     const after = useAppStore.getState().events.filter((e) => e.reviewPlanId === plan.id);
     expect(after.map((e) => e.date)).toEqual(["2026-09-09", "2026-09-10", "2026-09-12"]);
     expect(after.find((e) => e.reviewIndex === 1)!.completed).toBe(true);
+  });
+
+  it("updateReviewPlan 只改标题不清空分类/颜色/优先级，null 可清除", async () => {
+    await useAppStore.getState().addReviewPlan({
+      title: "带元数据计划",
+      startDate: "2026-09-09",
+      intervals: [1, 2],
+      note: "备注",
+      categoryId: "cat-1",
+      color: "#123456",
+      priority: "high",
+    });
+    const plan = useAppStore.getState().reviewPlans.find((p) => p.title === "带元数据计划")!;
+    const event0 = useAppStore.getState().events.find((e) => e.reviewPlanId === plan.id && e.reviewIndex === 0)!;
+    // 只改标题
+    await useAppStore.getState().updateReviewPlan(plan.id, { title: "改名后的计划" }, "shift", event0.id);
+    const kept = useAppStore.getState().events.filter((e) => e.reviewPlanId === plan.id);
+    expect(kept.every((e) => e.categoryId === "cat-1" && e.color === "#123456" && e.priority === "high" && e.description === "备注")).toBe(true);
+    // 清除分类与备注
+    await useAppStore.getState().updateReviewPlan(plan.id, { title: "改名后的计划", categoryId: null, note: null }, "shift", event0.id);
+    const cleared = useAppStore.getState().events.filter((e) => e.reviewPlanId === plan.id);
+    expect(cleared.every((e) => e.categoryId === undefined && e.description === undefined)).toBe(true);
+    expect(cleared.every((e) => e.color === "#123456")).toBe(true);
   });
 
   it("moveReviewEventById shift：移动某次复习 → 整个计划平移", async () => {
