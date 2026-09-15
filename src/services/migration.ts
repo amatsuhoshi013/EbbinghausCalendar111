@@ -2,12 +2,11 @@ import type { Event } from "../types/event";
 import type { ReviewPlan, ReviewRule } from "../types/review";
 import type { V1Plan, V1State, V2State } from "../types/state";
 import { todayISO } from "../utils/date";
-import { DEFAULT_INTERVALS, generateReviewDates, isValidIntervals } from "../utils/ebbinghaus";
+import { generateReviewDates, isValidIntervals } from "../utils/ebbinghaus";
 import { uid } from "../utils/id";
+import { intervalKey, resolveRule } from "./reviews";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-const intervalKey = (intervals: number[]) => intervals.join(",");
 
 /** 校验运行时数据是否合法 v1 状态（用于导入的 JSON 等不可信输入）。 */
 export function validateV1State(input: unknown): asserts input is V1State {
@@ -30,7 +29,7 @@ export function validateV1State(input: unknown): asserts input is V1State {
  * v1（plan + completions）→ v2（Event / ReviewPlan / ReviewRule）。
  * 映射规则：
  * - 每个 v1 plan → 1 个 ReviewPlan（保留原 id）+ 按 intervals 生成 (1 Day0 + N 复习) 个 Event；
- * - 相同 intervals 序列的所有 plan 共用同一条 ReviewRule；
+ * - 相同 intervals 序列的所有 plan 共用同一条 ReviewRule（口径与运行时一致）；
  * - completions[planId][date] 映射为对应 Event.completed；
  * - note → Event.description，title 原样保留（复习次数由 reviewIndex 表达）；
  * - 顶层 selectedDate / currentView 迁入 settings，行为不变。
@@ -39,36 +38,20 @@ export function validateV1State(input: unknown): asserts input is V1State {
 export function migrateV1ToV2(v1: V1State, now: Date = new Date()): V2State {
   validateV1State(v1);
   const timestamp = now.toISOString();
+  const defaultIntervals = v1.settings?.defaultIntervals;
 
-  const reviewRules: ReviewRule[] = [];
-  const ruleByKey = new Map<string, ReviewRule>();
-  const ensureRule = (intervals: number[]): ReviewRule => {
-    const key = intervalKey(intervals);
-    let rule = ruleByKey.get(key);
-    if (!rule) {
-      rule = {
-        id: uid(),
-        name: key === intervalKey(DEFAULT_INTERVALS) ? "标准" : "自定义间隔",
-        intervals: [...intervals],
-        createdAt: timestamp,
-        updatedAt: timestamp,
-      };
-      ruleByKey.set(key, rule);
-      reviewRules.push(rule);
-    }
-    return rule;
-  };
-
+  let reviewRules: ReviewRule[] = [];
   const reviewPlans: ReviewPlan[] = [];
   const events: Event[] = [];
 
   for (const plan of v1.plans) {
-    const rule = ensureRule(plan.intervals);
+    const resolved = resolveRule(plan.intervals, reviewRules, now);
+    reviewRules = resolved.rules;
     reviewPlans.push({
       id: plan.id,
       title: plan.title,
       startDate: plan.startDate,
-      ruleId: rule.id,
+      ruleId: resolved.rule.id,
       createdAt: plan.createdAt ?? timestamp,
       updatedAt: plan.createdAt ?? timestamp,
     });
@@ -95,8 +78,8 @@ export function migrateV1ToV2(v1: V1State, now: Date = new Date()): V2State {
     reviewPlans,
     reviewRules,
     settings: {
-      defaultRuleId: v1.settings?.defaultIntervals
-        ? ruleByKey.get(intervalKey(v1.settings.defaultIntervals))?.id
+      defaultRuleId: defaultIntervals
+        ? reviewRules.find((r) => intervalKey(r.intervals) === intervalKey(defaultIntervals))?.id
         : undefined,
       compactMode: v1.settings?.compactMode ?? true,
       reviewMinutes: v1.settings?.reviewMinutes ?? 5,

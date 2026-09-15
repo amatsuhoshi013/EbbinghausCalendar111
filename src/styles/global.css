@@ -1,0 +1,530 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(74, 108, 247, 0.16), transparent 28%),
+    radial-gradient(circle at top right, rgba(34, 197, 94, 0.11), transparent 24%),
+    var(--bg);
+  min-height: 100vh;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* ---------- 布局 ---------- */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 16px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: var(--sidebar-bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 16px;
+  height: calc(100vh - 32px);
+}
+
+.sidebar-inner {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 20px 14px;
+}
+
+.sidebar-brand h1 {
+  margin: 0 0 6px;
+  font-size: 19px;
+}
+
+.sidebar-brand p {
+  margin: 0 0 18px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  text-align: left;
+  font-size: 14px;
+}
+
+.nav-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.nav-item.active {
+  background: var(--sidebar-active);
+  color: var(--primary-2);
+  font-weight: 600;
+}
+
+.nav-tag {
+  margin-left: auto;
+  font-style: normal;
+  font-size: 10px;
+  background: var(--tab-bg);
+  color: var(--tab-text);
+  border-radius: 999px;
+  padding: 3px 8px;
+}
+
+.sidebar-foot {
+  margin-top: auto;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 0 14px;
+}
+
+.app-main {
+  min-width: 0;
+}
+
+.calendar-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 16px;
+  align-items: start;
+}
+
+.boot-hint {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  color: var(--muted);
+}
+
+/* ---------- 卡片 ---------- */
+
+.card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(219, 228, 240, 0.9);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 18px;
+}
+
+.card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+/* ---------- 日历 ---------- */
+
+.calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.icon-btn:hover {
+  background: var(--hover-bg);
+  color: var(--primary-2);
+}
+
+.month-picker {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 7px 9px;
+  color: var(--text);
+  background: var(--card);
+  cursor: pointer;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.weekday {
+  text-align: center;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 4px 0;
+}
+
+.day {
+  min-height: 92px;
+  border-radius: 16px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  padding: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.12s ease;
+}
+
+.day:hover {
+  border-color: var(--primary);
+}
+
+.day.muted {
+  opacity: 0.4;
+}
+
+.day.selected {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px rgba(74, 108, 247, 0.12);
+}
+
+.day.is-today .day-number {
+  background: var(--primary);
+  color: #fff;
+  border-radius: 999px;
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.day-number {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.day-events {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.day-event {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--muted);
+  padding: 3px 6px;
+  border-radius: 6px;
+  background: var(--dot-bg);
+  border: 1px solid var(--dot-border);
+}
+
+.day-event::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.st-done::before {
+  background: var(--success);
+}
+
+.st-overdue::before {
+  background: var(--danger);
+}
+
+.st-today::before {
+  background: var(--warning);
+}
+
+.st-future::before {
+  background: var(--primary);
+}
+
+.day-more {
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: 6px;
+}
+
+/* ---------- 按钮 ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  border-radius: 999px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.btn.primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 10px 24px rgba(74, 108, 247, 0.24);
+}
+
+.btn.ghost {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--line);
+}
+
+.btn.danger {
+  background: var(--danger-bg);
+  color: var(--danger-text);
+}
+
+/* ---------- 右侧面板 ---------- */
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.panel-sub {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.panel-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.event-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.empty-hint {
+  color: var(--muted);
+  font-size: 14px;
+  padding: 10px 0;
+}
+
+.event-row {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 14px;
+  background: linear-gradient(180deg, #fff, var(--task-bg));
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.event-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.event-row-title {
+  font-weight: 700;
+  font-size: 15px;
+}
+
+.event-row-sub {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.event-row-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 12px;
+  border: 1px solid transparent;
+  align-self: flex-start;
+}
+
+.pill.today {
+  background: var(--pill-today-bg);
+  color: var(--pill-today-text);
+  border-color: var(--pill-today-border);
+}
+
+.pill.overdue {
+  background: var(--pill-overdue-bg);
+  color: var(--pill-overdue-text);
+  border-color: var(--pill-overdue-border);
+}
+
+.pill.done {
+  background: var(--pill-done-bg);
+  color: var(--pill-done-text);
+  border-color: var(--pill-done-border);
+}
+
+.pill.future {
+  background: var(--pill-future-bg);
+  color: var(--pill-future-text);
+  border-color: var(--pill-future-border);
+}
+
+/* ---------- 对话框 ---------- */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  z-index: 40;
+}
+
+.dialog {
+  width: min(640px, 100%);
+}
+
+.dialog-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.dialog-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 14px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field.full {
+  grid-column: 1 / -1;
+}
+
+.field label {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.field input,
+.field textarea {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 11px 13px;
+  background: var(--card);
+  color: var(--text);
+}
+
+.field textarea {
+  min-height: 76px;
+  resize: vertical;
+}
+
+.form-error {
+  margin-top: 12px;
+  color: var(--danger-text);
+  background: var(--danger-bg);
+  border: 1px solid var(--pill-overdue-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 13px;
+}
+
+/* ---------- 响应式 ---------- */
+
+@media (max-width: 1080px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    position: static;
+    height: auto;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .calendar-page {
+    grid-template-columns: 1fr;
+  }
+}
